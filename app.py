@@ -9,6 +9,7 @@ from langchain.prompts import PromptTemplate
 from langchain_community.llms import HuggingFaceHub
 from langchain_google_genai import ChatGoogleGenerativeAI
 import os
+from langchain_community.document_loaders.csv_loader import CSVLoader
 import requests
 from flask import Flask,request,jsonify
 
@@ -25,24 +26,36 @@ app = Flask(__name__)
 
 @app.route('/query', methods=['POST'])
 def chatbot_process():
-    loader = TextLoader("test.txt")
-    documents = loader.load()
-    text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
-    docs = text_splitter.split_documents(documents)
+    #CSV Loader
+    loader = CSVLoader(file_path="SampleData2.csv", encoding="utf-8",csv_args={
+                'delimiter': ','})
+
+    data = loader.load()
+    # loader = TextLoader("test.txt")
+    # documents = loader.load()
+    # text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
+    # docs = text_splitter.split_documents(data)
     os.environ["HUGGINGFACEHUB_API_TOKEN"] = "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"
     embeddings =GPT4AllEmbeddings()
     os.environ["GOOGLE_API_KEY"]="AIzaSyC1v_n6qGnxEbQ1RLLkDjooFaWximsp0B4"
-    db = FAISS.from_documents(docs,embeddings)
+    # db = FAISS.from_documents(data,embeddings)
+    # db.save_local("faiss_index")
+
+    new_db = FAISS.load_local("faiss_index", embeddings)
+
+
     data=request.get_json()
     user_query=data['query']
-    docs = db.similarity_search(user_query)
+    docs = new_db.similarity_search(user_query)
     text=(docs[0].page_content)
+    print(text)
     llm = ChatGoogleGenerativeAI(model="gemini-pro")
     template = """Answer the given question by using the below given context:
     Question: {query},
     Context: {text}
 
-    And give response in a summarised manner in 50 words.
+    Return the content of "answer" field if "status" field is set to "Y" or"YES"
+    Else return "Not Valid Answer Present" as response.
     """
 
     prompt = PromptTemplate(template=template, input_variables=["query","text"])
