@@ -1,3 +1,5 @@
 langchain
 langchain_community
 faiss-cpu
+
+pip install --upgrade --quiet  langchain-google-genai pillow
