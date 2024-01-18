@@ -1,5 +1,22 @@
-langchain
-langchain_community
-faiss-cpu
 
-pip install --upgrade --quiet  langchain-google-genai pillow
+faiss-cpu==1.7.4
+
+Flask==3.0.0
+
+google-ai-generativelanguage==0.4.0
+google-api-core==2.15.0
+google-auth==2.26.2
+google-generativeai==0.3.2
+googleapis-common-protos==1.62.0
+gpt4all==2.1.0
+langchain==0.0.354
+langchain-community==0.0.13
+langchain-core==0.1.11
+langchain-google-genai==0.0.6
+langchainplus-sdk==0.0.20
+Pillow==10.0.0
+
+
+#Step to install
+
+# pip install -r requirements.txt
