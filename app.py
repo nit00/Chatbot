@@ -1,5 +1,5 @@
-from langchain.text_splitter import CharacterTextSplitter
-from langchain_community.document_loaders import TextLoader
+# from langchain.text_splitter import CharacterTextSplitter
+# from langchain_community.document_loaders import TextLoader
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import AwaEmbeddings
 from langchain_community.embeddings import GPT4AllEmbeddings
@@ -29,7 +29,6 @@ def chatbot_process():
     #CSV Loader
     loader = CSVLoader(file_path="SampleData2.csv", encoding="utf-8",csv_args={
                 'delimiter': ','})
-
     data = loader.load()
     # loader = TextLoader("test.txt")
     # documents = loader.load()
@@ -38,23 +37,26 @@ def chatbot_process():
     os.environ["HUGGINGFACEHUB_API_TOKEN"] = "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"
     embeddings =GPT4AllEmbeddings()
     os.environ["GOOGLE_API_KEY"]="AIzaSyC1v_n6qGnxEbQ1RLLkDjooFaWximsp0B4"
+    #Saving index local
     # db = FAISS.from_documents(data,embeddings)
     # db.save_local("faiss_index")
-
     new_db = FAISS.load_local("faiss_index", embeddings)
-
-
     data=request.get_json()
     user_query=data['query']
     docs = new_db.similarity_search(user_query)
-    text=(docs[0].page_content)
-    print(text)
+    text2=""
+    for doc in docs:
+        print(doc.page_content)
+        text2+=doc.page_content
+    # text=(docs[0].page_content)
+    # print(text)
+    text=text2
     llm = ChatGoogleGenerativeAI(model="gemini-pro")
     template = """Answer the given question by using the below given context:
     Question: {query},
     Context: {text}
 
-    Return the content of "answer" field if "status" field is set to "Y" or"YES"
+    Return the response after summarising the answer in a chatbot style if "status" field is set to "Y" or"YES"
     Else return "Not Valid Answer Present" as response.
     """
 
@@ -62,7 +64,8 @@ def chatbot_process():
     llm_chain = LLMChain(prompt=prompt, llm=llm)
     response=llm_chain.run({"query":user_query,"text":text})
     print(response)
-    return str(response)
+    return jsonify({"llm_response":response,
+                    "semantic_search_response":text})
 
 
 if __name__ == '__main__':
